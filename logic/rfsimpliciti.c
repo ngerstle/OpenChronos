@@ -76,6 +76,11 @@
 #ifdef CONFIG_SIDEREAL
 #include "sidereal.h"
 #endif
+
+#if (CONFIG_DST > 0)
+#include "dst.h"
+#endif
+
 // *************************************************************************************************
 // Defines section
 
@@ -436,7 +441,7 @@ WDTCTL = WDTPW + WDTHOLD;
 	{
 		/* Initialisation phase. Get a Session id and send the
 		   program wanted */
-		//display_chars(LCD_SEG_L1_3_2, itoa(packet_counter, 2, ' '), SEG_ON);
+		//display_chars(LCD_SEG_L1_3_2, _itoa(packet_counter, 2, ' '), SEG_ON);
 		
 		if(packet_counter == 30) {
 			simpliciti_flag |= SIMPLICITI_TRIGGER_STOP;
@@ -487,7 +492,7 @@ WDTCTL = WDTPW + WDTHOLD;
 				//simpliciti_data[3] = sAccel.xyz[2];
 				sPhase.data_nr++;
 			}
-//str = itoa(accel_data, 3, 0);
+//str = _itoa(accel_data, 3, 0);
 
 			if ((sPhase.out_nr > SLEEP_OUT_BUFFER-1))
 			{
@@ -705,6 +710,10 @@ void simpliciti_sync_decode_ap_cmd_callback(void)
 										sAlarm.hour			= simpliciti_data[8];
 										sAlarm.minute		= simpliciti_data[9];
 										#endif
+
+                                        #if (CONFIG_DST > 0)
+                                        dst_calculate_dates();
+                                        #endif
 										// Set temperature and temperature offset
 										t1 = (s16)((simpliciti_data[10]<<8) + simpliciti_data[11]);
 										offset = t1 - (sTemp.degrees - sTemp.offset);
@@ -712,8 +721,10 @@ void simpliciti_sync_decode_ap_cmd_callback(void)
 										sTemp.degrees = t1;									
 										// Set altitude
 #ifdef CONFIG_ALTITUDE
+#ifndef NO_ALTI
 										sAlt.altitude = (s16)((simpliciti_data[12]<<8) + simpliciti_data[13]);
 										update_pressure_table(sAlt.altitude, sAlt.pressure, sAlt.temperature);
+#endif										
 #endif
 #ifdef CONFIG_SIDEREAL
 										if(sSidereal_time.sync>0)

@@ -33,25 +33,59 @@
 //
 // *************************************************************************************************
 
-#ifndef RFBSL_H_
-#define RFBSL_H_
+#ifndef ACCELERATION_H_
+#define ACCELERATION_H_
+
+// *************************************************************************************************
+// Include section
+
 
 // *************************************************************************************************
 // Prototypes section
-extern void sx_rfbsl(u8 line);
-extern void mx_rfbsl(u8 line);
-extern void nx_rfbsl(u8 line);
-extern void display_rfbsl(u8 line, u8 update);
-#if defined(CONFIG_USE_DISCRET_RFBSL) && defined(CONFIG_BATTERY)
-extern void display_discret_rfbsl(u8 line, u8 update);
-#endif
+
 
 
 // *************************************************************************************************
 // Defines section
+#define DISPLAY_ACCEL_X		(0u)
+#define DISPLAY_ACCEL_Y		(1u)
+#define DISPLAY_ACCEL_Z		(2u)
 
-// Entry point of of the Flash Updater in BSL memory
-#define CALL_RFSBL()   ((void (*)())0x1000)()
+#define ACCEL_MODE_OFF		(0u)
+#define ACCEL_MODE_ON		(1u)
+
+// Stop acceleration measurement after 60 minutes to save battery
+#define ACCEL_MEASUREMENT_TIMEOUT		(60*60u)
 
 
-#endif /*RFBSL_H_*/
+// *************************************************************************************************
+// Global Variable section
+struct accel
+{
+	// ACC_MODE_OFF, ACC_MODE_ON
+	u8			mode;
+	
+	// Sensor raw data
+	u8			xyz[3];
+
+	// Acceleration data in 10 * mgrav
+	u16			data;
+
+	// Display X/Y/Z values	
+	u8 			view_style;
+
+	// Timeout
+	u16			timeout;	
+};
+extern struct accel sAccel;
+
+
+// *************************************************************************************************
+// Extern section
+extern void reset_acceleration(void);
+extern void sx_acceleration(u8 line);
+extern void display_acceleration(u8 line, u8 update);
+extern u8 is_acceleration_measurement(void);
+extern void do_acceleration_measurement(void);
+
+#endif /*ACCELERATION_H_*/

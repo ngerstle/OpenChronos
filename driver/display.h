@@ -92,6 +92,9 @@ typedef union
 	u16 update_sidereal_time	: 1;	// 1 = Sidereal Time was updated
 #endif
     u16 update_stopwatch     	: 1;    // 1 = Stopwatch was updated
+#ifdef CONFIG_EGGTIMER
+    u16 update_eggtimer : 1;
+#endif
     u16 update_temperature   	: 1;    // 1 = Temperature was updated
     u16 update_battery_voltage 	: 1;    // 1 = Battery voltage was updated
     u16 update_date      		: 1;    // 1 = Date was updated
@@ -111,6 +114,7 @@ extern volatile s_display_flags display;
 #define DISPLAY_LINE_UPDATE_FULL		(BIT0)
 #define DISPLAY_LINE_UPDATE_PARTIAL		(BIT1)
 #define DISPLAY_LINE_CLEAR				(BIT2)
+#define DISPLAY_LINE_MESSAGE			(BIT3)
 
 // Definitions for line view style
 #define DISPLAY_DEFAULT_VIEW			(0u)
@@ -361,7 +365,7 @@ extern void display_value1(u8 segments, u32 value, u8 digits, u8 blanks, u8 disp
 extern void display_hours_12_or_24(u8 segments, u32 value, u8 digits, u8 blanks, u8 disp_mode);
 
 // Integer to string conversion 
-extern u8 * itoa(u32 n, u8 digits, u8 blanks);
+extern u8 * _itoa(u32 n, u8 digits, u8 blanks);
 
 // Segment index helper function
 extern u8 switch_seg(u8 line, u8 index1, u8 index2);

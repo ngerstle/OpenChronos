@@ -1,54 +1,48 @@
+For the first, my goal is to make the code small, and modular, to fit more modules into the Chronos.
 
-This fork adds a variometer, an instrument indicating vertical speed,
-essentially for use in free flight (paragliding, hang gliding, ...).
+Changes, merges, project status
+  - Forked from Poelzi
+  - Little date bug fixed Dobfek
+  - altitude.c merged from monterosa, from http://sourceforge.net/projects/ez430chronos/
+  - WARNING!!! Some special altitude related modules will not work now(like altitude accumulator(reported by anilgulecha), etc...), because of the new altitude.c doesn't have them.(WILL BE REPAIRED!)
+  - Chooseable oldschool pushbutton light(TI firmware 1.5) from Wami https://github.com/wami
+  - Chooseable pressure filter from Wami https://github.com/wami
+  - You can disable altitude metering(I think it's not too useful.), pressure metering is fix, but will be modulized. Dobfek
+  - Display style of 6 and 9 is chooseable between normal, and 6 without top segment, 9 without bottom segment. 7448 style. Dobfek
+  - Few redesigned, more readable characters from me(V, S, Z), and few merged from anilgulecha(7, G, J). https://github.com/anilgulecha
+  - Leading zero for hour is merged, fixed, and chooseable from anilgulecha https://github.com/anilgulecha Commit: 1d14eb8b44bb3ebfa4ac8a820de8b7b432285cb8
+  - Dependency related "rare" bug reported by anilgulecha is solved. Dobfek
+  - Unavailable modules removed from config.py reported by anilgulecha is solved. Dobfek
+  
+Getting Openchronos build on Ubuntu 11.04:
+http://www.gulecha.org/2011/08/30/getting-openchronos-building-on-ubuntu-11-04/
+And howto from me:
+http://pastebin.com/CWQJajCF
 
-Initially based on the vario source coded by dkm, I ended up rewriting
-that module completely.
+Dobfek
 
-- Pressing the "v" (down) button cycles between displays as follows:
-        
-    * vario (in m/s)
-	  Displays a signed fractional value representing the ascent or
-          descent speed in meters per second.
+ -- ORIGINAL README FROM POELZI --
 
-    * vario (in Pascal)
-          Displays a signed integer value representing the ascent or
-          descent speed in Pascal/second.
+Updates the hidden menu RFBSL to work better.
 
-    * pressure (in hPa)
-          Displays a signed fraction representing the pressure measured at
-          the current altitude.
-
-    * max Vz (in m/s)
-          Displays the maximum vertical speed in meters/second.
-
-    * min Vz (in m/s)
-          Displays the minimum vertical speed in meters/second.
-    
-- A long press on the "#" button performs a context sensitive function:
-    
-    * during vario display, changes the vario sound mode:
-      Off      (default, no symbol displayed)
-      Ascent 0 (start beeping at 0.0m/s, beeper1 and beeper2 symbols
-               displayed)
-      Ascent 1 (start beeping at 0.1m/s, beeper1 symbol displayed)
-      Both     (beep for up or down, beeper1 and beeper2 symbols
-               displayed)
-
-      Tone frequency, number and duration of beeps depend on climb rate.
-
-    * during max/min Vz display, resets both the max and min values.
-    
-- The "record" icon is flashed at one second intervals, indicating that
-  the watch is in vario mode and receiving pressure measurements.
-          
-  Note that the upper line must be in altimeter mode for the vario to
-  work, as it relies on updates from the altimeter. If the altimeter
-  is not active, the vario display shows "noAlt".
 
 == Status ==
 
-Works, but in development :-)
+Should be fully functional.  The hidden menu RFBSL places the wireless
+update (RFBSL) menu entry as a sub-menu with the battery voltage monitor.
+
+This update makes toggling between the battery and rfbsl behave like a
+normal submenu (uses the down arrow), as well as fixes some pre-processor
+issues.  Specifically, disabling the battery voltage monitor AND enabling
+the hidden rfbsl menu would result in no rfbsl menu, forcing the user to
+use the (SLOW!) USB programmer for the next firmware upload.
+
+To-do idea (from gibbons): merge the battery, rfbsl, and sync functions
+all into one menu (a "hardware" or "tools" menu, for example). Ideally,
+also make it easier to pick and choose from these three options without
+needing ridiculous preprocessor commands, e.g.
+#if !defined(CONFIG_BATTERY) && defined(CONFIG_DISCRET_RFBSL) && ...
+
 
 == Requirements ==
 

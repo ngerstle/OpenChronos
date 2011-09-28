@@ -156,7 +156,7 @@ u8 update_acceleration(void)
 #ifdef CONFIG_EGGTIMER
 u8 update_eggtimer(void)
 {
-	return (display.flag.update_stopwatch);
+	return (display.flag.update_eggtimer);
 }
 #endif
 
@@ -171,7 +171,7 @@ u8 update_sidereal(void)
 // *************************************************************************************************
 // User navigation ( [____] = default menu item after reset )
 //
-//	LINE1: 	[Time] -> Alarm -> Temperature -> Altitude -> Heart rate -> Speed -> Acceleration
+//	LINE1: 	[Time] -> Alarm -> Temperature -> Altitude -> AltitudeAccumulator -> Heart rate -> Speed -> Acceleration
 //
 //	LINE2: 	[Date] -> Stopwatch -> Battery  -> ACC -> PPT -> SYNC -> Calories/Distance --> RFBSL
 // *************************************************************************************************
@@ -228,6 +228,18 @@ const struct menu menu_L1_Altitude =
 	FUNCTION(menu_skip_next),			// next item function
 	FUNCTION(display_altitude),			// display function
 	FUNCTION(update_time),				// new display data
+};
+#endif
+
+#ifdef CONFIG_ALTI_ACCUMULATOR
+// Line1 - Altitude Accumulator
+const struct menu menu_L1_AltAccum =
+{
+	FUNCTION(sx_alt_accumulator),		// direct function
+	FUNCTION(mx_alt_accumulator),		// sub menu function
+	FUNCTION(menu_skip_next),		// next item function
+	FUNCTION(display_alt_accumulator),	// display function
+	FUNCTION(update_time),			// new display data
 };
 #endif
 
@@ -290,8 +302,8 @@ const struct menu menu_L2_Vario =
 const struct menu menu_L2_Stopwatch =
 {
 	FUNCTION(sx_stopwatch),		// direct function
-	FUNCTION(menu_skip_next),	// next item function
 	FUNCTION(mx_stopwatch),		// sub menu function
+	FUNCTION(menu_skip_next),	// next item function
 	FUNCTION(display_stopwatch),// display function
 	FUNCTION(update_stopwatch),	// new display data
 };
@@ -311,15 +323,18 @@ const struct menu menu_L2_Eggtimer =
 #ifdef CONFIG_BATTERY
 const struct menu menu_L2_Battery =
 {
-	FUNCTION(dummy),					// direct function
-	#ifndef CONFIG_USE_DISCRET_RFBSL
-	FUNCTION(dummy),					// sub menu function
+	#ifdef CONFIG_USE_DISCRET_RFBSL
+	FUNCTION(sx_rfbsl), // sub menu function
+	FUNCTION(mx_rfbsl), // direct function
+	FUNCTION(nx_rfbsl), // next item function
+	FUNCTION(display_discret_rfbsl),
 	#else
-	FUNCTION(sx_rfbsl),					//sub function calls RFBSL
+	FUNCTION(dummy), // sub menu function
+	FUNCTION(dummy), // direct function
+	FUNCTION(menu_skip_next), // next item function
+	FUNCTION(display_battery_V), // display function
 	#endif
-	FUNCTION(menu_skip_next),			// next item function
-	FUNCTION(display_battery_V),		// display function
-	FUNCTION(update_battery_voltage),	// new display data
+	FUNCTION(update_battery_voltage), // new display data
 };
 #endif
 #ifdef CONFIG_PHASE_CLOCK
@@ -381,7 +396,10 @@ const struct menu menu_L2_CalDist =
 	//&menu_L2_RFBSL,
 };
 #endif
-#ifndef CONFIG_USE_DISCRET_RFBSL
+
+// Include independent RFBSL menu if battery menu disabled, or if user didn't
+// want the hidden RFBSL menu
+#if !defined(CONFIG_BATTERY) || !defined(CONFIG_USE_DISCRET_RFBSL)
 // Line2 - RFBSL
 const struct menu menu_L2_RFBSL =
 {
@@ -460,6 +478,9 @@ const struct menu *menu_L1[]={
 	#ifdef CONFIG_ALTITUDE
 	&menu_L1_Altitude,
 	#endif
+	#ifdef CONFIG_ALTI_ACCUMULATOR
+	&menu_L1_AltAccum,
+	#endif
 	#ifndef ELIMINATE_BLUEROBIN
 	&menu_L1_Heartrate,
 	#endif
@@ -485,6 +506,9 @@ const struct menu *menu_L2[]={
 	#ifdef CONFIG_BATTERY
 	&menu_L2_Battery,
 	#endif
+	#ifdef CONFIG_OTP
+	&menu_L2_Otp,
+	#endif
 	#ifdef CONFIG_PHASE_CLOCK
 	&menu_L2_Phase,
 	#endif
@@ -500,7 +524,7 @@ const struct menu *menu_L2[]={
 	#ifndef ELIMINATE_BLUEROBIN
 	&menu_L2_CalDist,
 	#endif
-	#ifndef CONFIG_USE_DISCRET_RFBSL
+	#if !defined(CONFIG_USE_DISCRET_RFBSL) || !defined(CONFIG_BATTERY)
 	&menu_L2_RFBSL,
 	#endif
 	#ifdef CONFIG_PROUT
@@ -509,10 +533,6 @@ const struct menu *menu_L2[]={
 	#ifdef CONFIG_USE_GPS
 	&menu_L2_Gps,
 	#endif
-	#ifdef CONFIG_OTP
-	&menu_L2_Otp,
-	#endif
-
 };
 
 const int menu_L2_size=sizeof(menu_L2)/sizeof(struct menu*);

@@ -33,25 +33,41 @@
 //
 // *************************************************************************************************
 
-#ifndef RFBSL_H_
-#define RFBSL_H_
+#ifndef DATE_H_
+#define DATE_H_
+
+
+// *************************************************************************************************
+// Include section
+
 
 // *************************************************************************************************
 // Prototypes section
-extern void sx_rfbsl(u8 line);
-extern void mx_rfbsl(u8 line);
-extern void nx_rfbsl(u8 line);
-extern void display_rfbsl(u8 line, u8 update);
-#if defined(CONFIG_USE_DISCRET_RFBSL) && defined(CONFIG_BATTERY)
-extern void display_discret_rfbsl(u8 line, u8 update);
-#endif
+extern void reset_date(void);
+extern void add_day(void);
+extern void mx_date(u8 line);
+extern void sx_date(u8 line);
+extern void display_date(u8 line, u8 update);
 
 
 // *************************************************************************************************
 // Defines section
 
-// Entry point of of the Flash Updater in BSL memory
-#define CALL_RFSBL()   ((void (*)())0x1000)()
+
+// *************************************************************************************************
+// Global Variable section
+struct date
+{
+	u8  view;
+	u8  day;
+	u8  month;
+	u16 year;
+};
+extern struct date sDate;
 
 
-#endif /*RFBSL_H_*/
+// *************************************************************************************************
+// Extern section
+
+
+#endif /*DATE_H_*/

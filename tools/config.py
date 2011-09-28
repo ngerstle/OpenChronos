@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # encoding: utf-8
 
 import urwid
@@ -122,17 +122,17 @@ DATA["TEXT_MODULES"] = {
 #### MODULES ####
 
 DATA["CONFIG_EGGTIMER"] = {
-        "name": "Eggtimer (1524 bytes)",
+        "name": "Eggtimer (1480 bytes)",
         "depends": [],
         "default": False,
-        "help": "Countdown timer to count down from 1 minute - 20 hours to 0 and start an alarm",
+        "help": "Countdown timer for intervals from seconds up to 20+ hours.",
 }
 
 DATA["CONFIG_PHASE_CLOCK"] = {
         "name": "Phase Clock (918 bytes)",
         "depends": [],
         "default": False,
-        "help": "Messures sleep phase by recording body movement and sending the data to the accesspoint.\n"
+        "help": "Measures sleep phase by recording body movement and sending the data to the accesspoint.\n"
                 "Designed to be used with uberclock",
 }
 
@@ -144,10 +144,17 @@ DATA["CONFIG_ALTITUDE"] = {
         }
 
 
-DATA["CONFIG_VARIO"] = {
-        "name": "Combined with alti, gives vertical speed (478 bytes)",
-        "depends": [],
-        "default": False}
+#DATA["CONFIG_VARIO"] = {
+#        "name": "Combined with alti, gives vertical speed (478 bytes)",
+#        "depends": [],
+#        "default": False}
+
+#DATA["CONFIG_ALTI_ACCUMULATOR"] = {
+#	"name": "Altitude accumulator (1068 bytes)",
+#	"depends": [],
+#	"default": False,
+#	"help": "If active take altitude measurement once per minute and accumulate all ascending vertical meters."
+#	}
 
 DATA["CONFIG_PROUT"] = {
         "name": "Simple example that displays a text (238 bytes)",
@@ -162,6 +169,15 @@ DATA["CONFIG_SIDEREAL"] = {
         "help": "Calculate and show local sidereal time (accurate to ~5s).\n"
                 "To work properly, the current time zone (that is set on the normal clock) and longitude have to be set on the watch. The clock does real sidereal second clock ticks. When desired the sidereal time can also be set manually.\n"
                 "This does NOT replace the normal clock which is still available and working."
+        }
+
+DATA["CONFIG_DST"] = {
+        "name": "Daylight Saving Time",
+        "depends": [],
+        "default": 0,
+        "type": "choices",
+        "values": [(0, "No DST"), (1, "US/Canada"), (2, "Mexico"), (3, "Brazil"), (4, "EU/UK/Eastern Europe"), (5, "Australia"), (6, "New Zealand")],
+        "help": "Automatically adjust Clock for Daylight Saving Time"
         }
 
 
@@ -225,6 +241,42 @@ DATA["CONFIG_USEPPT"] = {
         "depends": [],
         "default": True}
 
+###IMPLEMENTED by Dobfek, 2011-08-25 
+DATA["USE_PRESS"] = {
+	"name": "Use pressbutton backlight instead of 3 sec",
+	"depends": [],
+	"default": False}
+	
+###IMPLEMENTED Dobfek, from Wami 03.2011
+DATA["DONT_USE_FILTER"] = {
+	"name": "Don't use altitude measurment filter",
+	"depends": [],
+	"default": False}
+	
+	###IMPLEMENTED by Dobfek, 2011-08-27
+DATA["NO_ALTI"] = {
+	"name": "Disable altitude metering, but leaves the hPa display there(This option needs Altitude module)",
+	"depends": [],
+	"default": False}
+
+	###IMPLEMENTED by Dobfek, 2011-08-31
+DATA["OLD_SCH"] = {
+	"name": "Oldschool 6 and 9 characters.",
+	"depends": [],
+	"default": False}
+			
+	###IMPLEMENTED by anilgulecha, and Dobfek 2011-09-01
+DATA["NEW_CHAR"] = {
+	"name": "New, redesigned, more readable characters.",
+	"depends": [],
+	"default": False}
+
+	###IMPLEMENTED by anilgulecha 2011-09-02
+DATA["LZH"] = {
+	"name": "Leading zero for hours.",
+	"depends": [],
+	"default": False}
+			
 DATA["CONFIG_USE_SYNC_TOSET_TIME"] = {
 	"name": "Sync is the only way to set clocks data/time",
 	"depends": [],
@@ -240,6 +292,12 @@ DATA["CONFIG_USE_GPS"] = {
 	"depends": [],
 	"default": False}
 
+DATA["CONFIG_CW_TIME"] = {
+        "name": "CW Time",
+        "depends": [],
+        "default": False,
+	"help": "Send time in morse code"}
+
 ###Implemented by Yohanes Nugroho (yohanes@gmail.com)
 
 DATA["CONFIG_OTP"] = {
@@ -249,6 +307,11 @@ DATA["CONFIG_OTP"] = {
         "help": "Enable Time based OTP (one use of it is for google-authentication)"
 	}
 
+DATA["CONFIG_HOTP"] = {
+	"name": "HOTP algorithm",
+	"depends": ["CONFIG_OTP"],
+	"default": False,
+	"help": "Use event-based OTP rather than time-based"}
 
 DATA["CONFIG_OTP_KEY"] = {
 	"name": "OTP Key (in base32 encoded format)",
@@ -263,8 +326,6 @@ DATA["CONFIG_OTP_UTC_OFFSET"] = {
 	"default": 0,
         "type": "text",
         "help": "Offset from UTC in hours (can be negative)"	}
-
-
 
 
 HEADER = """
@@ -505,7 +566,7 @@ class OpenChronosApp(object):
 
 	otp_key = DATA["CONFIG_OTP_KEY"]
 
-	if (len(otp_key["value"])>0):
+	if ("value" in otp_key and isinstance(otp_key["value"], str) and len(otp_key["value"])>0):
 	     otp_key["value"] =  c_string_to_b32encoded_string(otp_key["value"]).lower()
 
 	set_default()

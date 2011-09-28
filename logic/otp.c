@@ -1,5 +1,6 @@
 /**
     Copyright (c) 2011 Yohanes Nugroho (yohanes@gmail.com)
+    Copyright (c) 2011 Google Inc. (qwandor@google.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,20 +47,25 @@ extern struct date sDate;
 #define SHA1_DIGEST_LENGTH 20
 
 /*in this implementation: MAX = 63*/
-#define HMAC_KEY_LENGTH 10
+#define HMAC_KEY_LENGTH (sizeof(CONFIG_OTP_KEY) - 1)
 #define HMAC_DATA_LENGTH 8
+
+#ifdef CONFIG_HOTP
+#define HOTP
+#else
+#define TOTP
+#endif
 
 static uint8_t hmac_key[HMAC_KEY_LENGTH];
 static uint32_t sha1_digest[8];
-static uint32_t sha1_count, sha1_count_hi;
+static uint32_t sha1_count;
 static uint8_t  sha1_data[SHA1_BLOCKSIZE];
 static uint32_t sha1_W[80];
-static uint8_t hmac_tmp_key[64 + HMAC_DATA_LENGTH];
+static uint8_t hmac_tmp_key[64 + SHA1_DIGEST_LENGTH]; // 64 + max(HMAC_DATA_LENGTH, SHA1_DIGEST_LENGTH)
 static uint8_t hmac_sha[SHA1_DIGEST_LENGTH];
 
 // The key for the inner digest is derived from our key, by padding the key
 // the full length of 64 bytes, and then XOR'ing each byte with 0x36.
-static uint8_t tmp_key[64];
 
 
 /* SHA f()-functions */
@@ -226,6 +232,7 @@ uint8_t* hmac_sha1(uint8_t *data) {
 	return hmac_sha;
 }
 
+#ifdef TOTP
 static int days[12] ={0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
 uint32_t simple_mktime(int year, int month, int day, int hour, int minute, int second)
@@ -248,21 +255,28 @@ uint32_t simple_mktime(int year, int month, int day, int hour, int minute, int s
 
 	return (result);
 }
+#endif
 
-static char otp_result[5];
 static uint8_t data[] = {0,0,0,0,0,0,0,0};
+static uint32_t last_val = 0;
 
-const char *key  = CONFIG_OTP_KEY;
+const char *key = CONFIG_OTP_KEY;
 
+#ifdef TOTP
 extern struct date sDate;
 extern struct time sTime;
 
 static uint32_t last_time = 0;
-static uint32_t last_val = 0;
+#endif
 
+#ifdef HOTP
+static uint64_t counter = 0;
+#endif
+
+#ifdef TOTP
 uint32_t otp()
 {
-	uint32_t val =0;
+	uint32_t val = 0;
 	int i;
 
 	uint32_t time = simple_mktime(sDate.year, sDate.month - 1, sDate.day,
@@ -290,7 +304,7 @@ uint32_t otp()
 	int off = hmac_sha[SHA1_DIGEST_LENGTH-1] & 0x0f;
 
 	char *cc = (char *)&val;
-	for (i =0; i < 4; i++) {
+	for (i = 0; i < 4; i++) {
 		cc[3-i] = hmac_sha[off+i];
 	}
 	val &= 0x7fffffff;
@@ -300,24 +314,60 @@ uint32_t otp()
 
 	return val;
 }
+#endif
+
+#ifdef HOTP
+uint32_t otp()
+{
+	int i;
+	uint64_t temp = counter;
+	for (i = 0; i < 8; ++i) {
+		data[7 - i] = temp & 0xff;
+		temp >>= 8;
+	}
+
+	memcpy(hmac_key, key, HMAC_KEY_LENGTH);
+	hmac_sha1(data);
+
+	int off = hmac_sha[SHA1_DIGEST_LENGTH - 1] & 0x0f;
+
+	last_val = 0;
+	char *cc = (char *) &last_val;
+	for (i = 0; i < 4; i++) {
+		cc[3 - i] = hmac_sha[off + i];
+	}
+	last_val &= 0x7fffffff;
+	last_val %= 1000000;
+
+	++counter;
+
+	return last_val;
+}
+#endif
 
 static int display_mode = 0; //show first 2 digits
 
 void otp_sx(u8 line)
 {
-	otp();
+	display_mode = !display_mode;
 	display_otp(line, DISPLAY_LINE_UPDATE_PARTIAL);
 }
 
 void otp_switch(u8 line)
 {
-	display_mode = !display_mode;
+	otp();
+#ifdef HOTP
+	display_mode = 0;
+#endif
 	display_otp(line, DISPLAY_LINE_UPDATE_PARTIAL);
 }
 
-void update_otp(u8 line, u8 update)
+u8 update_otp(u8 line, u8 update)
 {
+#ifdef TOTP
 	otp();
+#endif
+	return 0;
 }
 
 #ifdef TEST_SHA1
@@ -384,23 +434,25 @@ void display_otp(u8 line, u8 update)
 	test_sha1();
 #endif
 
-	if (update == DISPLAY_LINE_UPDATE_FULL ||  update==DISPLAY_LINE_UPDATE_PARTIAL)
+	if (update == DISPLAY_LINE_UPDATE_FULL || update == DISPLAY_LINE_UPDATE_PARTIAL)
 	{
 		u8 *str;
 
 		display_symbol(LCD_ICON_HEART, SEG_ON);
 
+#if TOTP
 		otp();
+#endif
 
 		if (!display_mode) {
 			display_symbol(LCD_SYMB_MAX, SEG_OFF);
-			int v = (last_val/10000) % 100;
-			str = itoa(v, 2, 0);
+			int v = (last_val / 10000) % 100;
+			str = _itoa(v, 2, 0);
 			display_chars(LCD_SEG_L2_1_0, str, SEG_ON);
 		} else {
 			display_symbol(LCD_SYMB_MAX, SEG_ON);
-			int v = (last_val%10000);
-			str = itoa(v, 4, 0);
+			int v = (last_val % 10000);
+			str = _itoa(v, 4, 0);
 			display_chars(LCD_SEG_L2_3_0, str, SEG_ON);
 		}
 
@@ -409,8 +461,6 @@ void display_otp(u8 line, u8 update)
 			str = "9999";
 		display_chars(LCD_SEG_L2_3_0, str, SEG_ON);
 #endif
-
-
 	}
 	if (update == DISPLAY_LINE_CLEAR) {
 		display_symbol(LCD_ICON_HEART, SEG_OFF);

@@ -83,6 +83,7 @@ struct alt
 
 	// Timeout
 	u16		timeout;
+	
 };
 extern struct alt sAlt;
 
