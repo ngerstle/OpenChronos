@@ -300,6 +300,8 @@ DATA["CONFIG_CW_TIME"] = {
 
 ###Implemented by Yohanes Nugroho (yohanes@gmail.com)
 
+
+####//TODO  set for dynamic number of otp keys; disable htop
 DATA["CONFIG_OTP"] = {
 	"name": "OTP Function",
 	"depends": [],

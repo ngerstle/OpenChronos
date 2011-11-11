@@ -452,7 +452,8 @@ const struct menu menu_L2_Gps =
 const struct menu menu_L2_Otp =
 {
 	FUNCTION(otp_sx),					// direct function
-	FUNCTION(otp_switch),					// sub menu function
+//	FUNCTION(otp_switch),					// sub menu function
+	FUNCTION(otp_mx),					// sub menu function -> switch keys
 	FUNCTION(menu_skip_next),			// next item function
 	FUNCTION(display_otp),		// display function
 	FUNCTION(update_otp),	// new display data

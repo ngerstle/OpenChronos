@@ -45,24 +45,22 @@ extern struct date sDate;
 
 #define SHA1_BLOCKSIZE     64
 #define SHA1_DIGEST_LENGTH 20
+#define MAX_KEYS 5 //TODO set in config script..
 
 /*in this implementation: MAX = 63*/
 #define HMAC_KEY_LENGTH (sizeof(CONFIG_OTP_KEY) - 1)
 #define HMAC_DATA_LENGTH 8
 
-#ifdef CONFIG_HOTP
-#define HOTP
-#else
-#define TOTP
-#endif
+#define TOTP //add back the ifdef config htop define htop else define totp here
 
-static uint8_t hmac_key[HMAC_KEY_LENGTH];
+static uint8_t hmac_key[HMAC_KEY_LENGTH]; //TODO make hmac_key[max_keys][hmac_key_length]; find & replace all hmac_key[] with hmac[][]
 static uint32_t sha1_digest[8];
 static uint32_t sha1_count;
 static uint8_t  sha1_data[SHA1_BLOCKSIZE];
 static uint32_t sha1_W[80];
 static uint8_t hmac_tmp_key[64 + SHA1_DIGEST_LENGTH]; // 64 + max(HMAC_DATA_LENGTH, SHA1_DIGEST_LENGTH)
 static uint8_t hmac_sha[SHA1_DIGEST_LENGTH];
+uint8_t keynum; //the current key
 
 // The key for the inner digest is derived from our key, by padding the key
 // the full length of 64 bytes, and then XOR'ing each byte with 0x36.
@@ -347,9 +345,16 @@ uint32_t otp()
 
 static int display_mode = 0; //show first 2 digits
 
-void otp_sx(u8 line)
+void otp_sx(u8 line) //flip between [0,1] and [2,3,4,5]
 {
 	display_mode = !display_mode;
+	display_otp(line, DISPLAY_LINE_UPDATE_PARTIAL);
+}
+
+void otp_mx(u8 line) //rotate key counter
+{
+	keynum = (keynum ++)%MAX_KEYS;
+	otp();
 	display_otp(line, DISPLAY_LINE_UPDATE_PARTIAL);
 }
 
